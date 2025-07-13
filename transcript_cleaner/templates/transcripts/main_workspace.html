@@ -1,0 +1,344 @@
+{% extends "base_workspace.html" %}
+{% load static %}
+
+{% block title %}Teams Transcript Cleaner - メインワークスペース{% endblock %}
+
+{% block extra_head %}
+<style>
+.workspace-container {
+    display: flex;
+    height: calc(100vh - 100px);
+    gap: 20px;
+}
+
+.sidebar {
+    width: 30%;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+}
+
+.main-area {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.text-columns {
+    display: flex;
+    gap: 15px;
+    height: 450px;
+}
+
+.text-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.text-area {
+    flex: 1;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 12px;
+    resize: none;
+}
+
+.sidebar-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.sidebar-section:last-child {
+    border-bottom: none;
+}
+
+.cost-info {
+    background: #e3f2fd;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 4px solid #2196f3;
+}
+
+.model-price {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.processing-mode {
+    margin: 15px 0;
+}
+
+.processing-mode label {
+    display: block;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.csv-editor {
+    height: 150px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+}
+
+.diff-viewer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.diff-added {
+    background-color: #aaffaa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.diff-removed {
+    background-color: #ffaaaa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.button-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.button-row .btn {
+    flex: 1;
+}
+
+.file-info {
+    background: #e8f5e8;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 14px;
+    border-left: 4px solid #4caf50;
+}
+
+.warning-info {
+    background: #fff3cd;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 14px;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+}
+
+.correction-button {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    width: 100%;
+    margin: 15px 0;
+    transition: all 0.3s ease;
+}
+
+.correction-button:hover:not(:disabled) {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.correction-button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-file-text me-2"></i>
+                Teams Transcript Cleaner
+            </h2>
+            <p class="text-muted">Microsoft Teams会議録のAI修正システム</p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-primary">{{ user.get_full_name|default:user.username }}</span>
+                <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i>ログアウト
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace-container">
+        <!-- サイドバー -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h5><i class="fas fa-cog me-2"></i>設定</h5>
+                
+                <!-- APIキー状況 -->
+                <div class="mb-3">
+                    <div id="api-key-status" class="cost-info">
+                        <i class="fas fa-key me-2"></i>
+                        <span id="api-key-text">APIキー確認中...</span>
+                    </div>
+                </div>
+
+                <!-- コスト情報 -->
+                <div class="cost-info">
+                    <div><strong>累計使用コスト:</strong> $<span id="total-cost">{{ user.total_api_cost|floatformat:4 }}</span> USD</div>
+                    <div><strong>使用制限:</strong> ${{ user.api_usage_limit }} USD</div>
+                    <div><strong>残り予算:</strong> $<span id="remaining-budget">{{ user.remaining_api_budget|floatformat:4 }}</span> USD</div>
+                </div>
+                
+                <div class="cost-info mt-2">
+                    <div><strong>現在のセッション:</strong> $<span id="session-cost">0.0000</span> USD</div>
+                </div>
+                
+                <button class="btn btn-outline-danger btn-sm mt-2" onclick="resetCost()">
+                    <i class="fas fa-redo me-1"></i>コスト履歴リセット
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <h6><i class="fas fa-robot me-2"></i>OpenAIモデル選択</h6>
+                <select class="form-select" id="ai-model" onchange="updateModelPrice()">
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </select>
+                <div class="model-price" id="model-price">料金: $0.01 USD / 1000トークン</div>
+            </div>
+
+            <div class="sidebar-section">
+                <h6><i class="fas fa-tools me-2"></i>処理モード選択</h6>
+                <div class="processing-mode">
+                    <label>
+                        <input type="radio" name="processing_mode" value="misspelling" checked>
+                        <i class="fas fa-spell-check me-2"></i>誤字脱字修正
+                    </label>
+                    <label>
+                        <input type="radio" name="processing_mode" value="grammar">
+                        <i class="fas fa-language me-2"></i>文法訂正
+                    </label>
+                    <label>
+                        <input type="radio" name="processing_mode" value="summarize">
+                        <i class="fas fa-compress-alt me-2"></i>要約
+                    </label>
+                </div>
+                
+                <div class="mt-3">
+                    <label for="custom-prompt" class="form-label">追加の指示</label>
+                    <textarea class="form-control" id="custom-prompt" rows="3" 
+                        placeholder="例: 誤字脱字モード「特に人名を重点的に確認」、要約モード「300字以内で結論を先に」"></textarea>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h6><i class="fas fa-upload me-2"></i>ファイルアップロード</h6>
+                
+                <!-- TXTファイル -->
+                <div class="mb-3">
+                    <label for="txt-upload" class="form-label">訂正前議事録（TXT）</label>
+                    <input type="file" class="form-control" id="txt-upload" accept=".txt" onchange="loadTxtFile(this)">
+                    <div id="txt-file-info"></div>
+                </div>
+
+                <!-- CSVファイル（誤字脱字モードのみ） -->
+                <div id="csv-section" class="mb-3">
+                    <label for="csv-upload" class="form-label">誤字脱字一覧（CSV）</label>
+                    <input type="file" class="form-control" id="csv-upload" accept=".csv" onchange="loadCsvFile(this)">
+                </div>
+
+                <!-- CSV編集エリア -->
+                <div id="csv-editor-section">
+                    <h6>誤字脱字一覧編集</h6>
+                    <textarea class="form-control csv-editor" id="csv-editor" 
+                        placeholder="誤,正&#10;マイクロソフト,Microsoft&#10;エクセル,Excel"></textarea>
+                </div>
+            </div>
+
+            <!-- 訂正実行ボタン -->
+            <button class="correction-button" id="correction-button" onclick="executeCorrection()" disabled>
+                <i class="fas fa-magic me-2"></i>訂正実行
+            </button>
+        </div>
+
+        <!-- メインエリア -->
+        <div class="main-area">
+            <div class="text-columns">
+                <!-- 訂正前 -->
+                <div class="text-column">
+                    <h5><i class="fas fa-file-alt me-2"></i>訂正前のファイル内容（編集不可）</h5>
+                    <textarea class="text-area" id="original-text" readonly 
+                        placeholder="左のサイドバーからTXTファイルをアップロードしてください"></textarea>
+                </div>
+
+                <!-- 訂正後 -->
+                <div class="text-column">
+                    <h5><i class="fas fa-edit me-2"></i>訂正後のファイル内容（手修正可）</h5>
+                    <textarea class="text-area" id="corrected-text" 
+                        placeholder="訂正実行後にここに結果が表示されます"
+                        oninput="updateDiff()"></textarea>
+                </div>
+            </div>
+
+            <!-- 差分表示 -->
+            <div class="mt-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="show-diff" onchange="toggleDiff()">
+                    <label class="form-check-label" for="show-diff">
+                        <i class="fas fa-exchange-alt me-2"></i>差分表示
+                    </label>
+                </div>
+                <div id="diff-viewer" class="diff-viewer mt-2" style="display: none;"></div>
+            </div>
+
+            <!-- ボタン行 -->
+            <div class="button-row">
+                <button class="btn btn-outline-primary" onclick="copyToOriginal()" id="copy-button" disabled>
+                    <i class="fas fa-copy me-2"></i>訂正後テキストを訂正前にコピー
+                </button>
+                <button class="btn btn-success" onclick="downloadResult()" id="download-button" disabled>
+                    <i class="fas fa-download me-2"></i>最終確定ダウンロード
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token for JavaScript -->
+{% csrf_token %}
+
+<script src="{% static 'js/workspace.js' %}?v=2"></script>
+{% endblock %}
