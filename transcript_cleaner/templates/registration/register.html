@@ -1,131 +1,107 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}新規登録 - Teams Transcript Cleaner{% endblock %}
+{% block title %}アカウント登録{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card">
-            <div class="card-header text-center">
-                <h4><i class="fas fa-user-plus"></i> 新規登録</h4>
-            </div>
-            <div class="card-body">
-                {% if form.errors %}
-                <div class="alert alert-danger">
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <div>{{ error }}</div>
-                        {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <div>{{ error }}</div>
-                    {% endfor %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-plus me-2"></i>アカウント登録
+                    </h3>
                 </div>
-                {% endif %}
-                
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.username.id_for_label }}" class="form-label">
-                            ユーザー名 *
-                        </label>
-                        <input type="text" 
-                               class="form-control {% if form.username.errors %}is-invalid{% endif %}"
-                               id="{{ form.username.id_for_label }}"
-                               name="{{ form.username.name }}"
-                               value="{{ form.username.value|default:'' }}"
-                               required>
-                        {% if form.username.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.username.errors.0 }}
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">ユーザー名</label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">{{ form.username.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endif %}
-                        <div class="form-text">
-                            半角英数字、@/./+/-/_ のみ使用可能です。
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">
-                            メールアドレス *
-                        </label>
-                        <input type="email" 
-                               class="form-control"
-                               id="email"
-                               name="email"
-                               required>
-                        <div class="form-text">
-                            ログイン時にメールアドレスも使用できます。
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.password1.id_for_label }}" class="form-label">
-                            パスワード *
-                        </label>
-                        <input type="password" 
-                               class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
-                               id="{{ form.password1.id_for_label }}"
-                               name="{{ form.password1.name }}"
-                               required>
-                        {% if form.password1.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.password1.errors.0 }}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">メールアドレス</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endif %}
-                        <div class="form-text">
-                            <ul class="mb-0">
-                                <li>他の個人情報と類似していないこと</li>
-                                <li>最低8文字以上</li>
-                                <li>よく使われるパスワードでないこと</li>
-                                <li>数字のみでないこと</li>
-                            </ul>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.password2.id_for_label }}" class="form-label">
-                            パスワード（確認） *
-                        </label>
-                        <input type="password" 
-                               class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
-                               id="{{ form.password2.id_for_label }}"
-                               name="{{ form.password2.name }}"
-                               required>
-                        {% if form.password2.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.password2.errors.0 }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">名</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="organization" class="form-label">
-                            組織名（任意）
-                        </label>
-                        <input type="text" 
-                               class="form-control"
-                               id="organization"
-                               name="organization">
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-user-plus"></i> 登録
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">姓</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.organization.id_for_label }}" class="form-label">組織名（オプション）</label>
+                            {{ form.organization }}
+                            {% if form.organization.errors %}
+                                <div class="text-danger">{{ form.organization.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label">パスワード</label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger">{{ form.password1.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <ul>
+                                            <li>8文字以上</li>
+                                            <li>数字と文字を含む</li>
+                                            <li>一般的なパスワードは避ける</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label">パスワード（確認）</label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger">{{ form.password2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-1"></i>アカウント登録
                         </button>
-                    </div>
-                </form>
-                
-                <hr>
-                
-                <div class="text-center">
-                    <p class="mb-0">
-                        既にアカウントをお持ちの方は
-                        <a href="{% url 'login' %}" class="text-decoration-none">
-                            ログイン
-                        </a>
-                    </p>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'accounts:login' %}">既にアカウントをお持ちの方</a>
                 </div>
             </div>
         </div>

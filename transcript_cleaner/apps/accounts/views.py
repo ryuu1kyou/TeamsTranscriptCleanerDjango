@@ -3,13 +3,15 @@ Views for user account management.
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.urls import reverse_lazy
 from decimal import Decimal
 import json
 
@@ -22,32 +24,24 @@ from rest_framework.views import APIView
 from rest_framework import serializers
 
 from .models import User, UserProfile
+from .forms import (
+    CustomUserCreationForm, UserProfileForm, UserProfileExtendedForm, 
+    ChangePasswordCustomForm
+)
 from ..corrections.models import CorrectionJob
 
 
 def register(request):
     """User registration view."""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        email = request.POST.get('email', '')
-        organization = request.POST.get('organization', '')
-        
-        if form.is_valid() and email:
-            user = form.save(commit=False)
-            user.email = email
-            user.organization = organization
-            user.save()
-            
-            # Create user profile
-            UserProfile.objects.create(user=user)
-            
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
             login(request, user)
             messages.success(request, 'アカウントが作成されました。')
             return redirect('transcripts:list')
-        elif not email:
-            messages.error(request, 'メールアドレスを入力してください。')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     
     return render(request, 'registration/register.html', {'form': form})
 
@@ -79,35 +73,40 @@ def profile_edit(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
-        # Update user fields
-        request.user.first_name = request.POST.get('first_name', '')
-        request.user.last_name = request.POST.get('last_name', '')
-        request.user.organization = request.POST.get('organization', '')
+        user_form = UserProfileForm(request.POST, instance=request.user)
+        profile_form = UserProfileExtendedForm(request.POST, instance=profile)
         
-        # Update API usage limit (if user has permission)
-        api_usage_limit = request.POST.get('api_usage_limit')
-        if api_usage_limit:
-            try:
-                limit = Decimal(api_usage_limit)
-                if limit >= Decimal('0.01'):
-                    request.user.api_usage_limit = limit
-            except (ValueError, TypeError):
-                messages.error(request, 'API使用制限の値が正しくありません。')
-                return render(request, 'accounts/profile_edit.html', {'profile': profile})
-        
-        request.user.save()
-        
-        # Update profile fields
-        profile.bio = request.POST.get('bio', '')
-        profile.phone_number = request.POST.get('phone_number', '')
-        profile.timezone = request.POST.get('timezone', 'Asia/Tokyo')
-        profile.language_preference = request.POST.get('language_preference', 'ja')
-        profile.save()
-        
-        messages.success(request, 'プロフィールが更新されました。')
-        return redirect('accounts:profile')
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'プロフィールが更新されました。')
+            return redirect('accounts:profile')
+    else:
+        user_form = UserProfileForm(instance=request.user)
+        profile_form = UserProfileExtendedForm(instance=profile)
     
-    return render(request, 'accounts/profile_edit.html', {'profile': profile})
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    }
+    
+    return render(request, 'accounts/profile_edit.html', context)
+
+
+@login_required
+def change_password(request):
+    """Change user password."""
+    if request.method == 'POST':
+        form = ChangePasswordCustomForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'パスワードが変更されました。')
+            return redirect('accounts:profile')
+    else:
+        form = ChangePasswordCustomForm(request.user)
+    
+    return render(request, 'accounts/change_password.html', {'form': form})
 
 
 @login_required
@@ -274,3 +273,19 @@ class ChangePasswordAPIView(APIView):
         request.user.set_password(new_password)
         request.user.save()
         return Response({'message': 'Password changed successfully'})
+
+
+@login_required
+def logout_view(request):
+    """Handle user logout."""
+    from django.contrib.auth import logout
+    
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'ログアウトしました。')
+        return redirect('transcripts:list')
+    
+    # For GET requests, you might want to show a confirmation page
+    # But typically logout is handled via POST for security
+    # Redirect to home or show error
+    return redirect('transcripts:list')

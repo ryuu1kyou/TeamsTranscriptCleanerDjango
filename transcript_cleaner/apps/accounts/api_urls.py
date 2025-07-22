@@ -1,27 +1,17 @@
 """
 API URL configuration for accounts app.
 """
-from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import api_views
 
-app_name = 'accounts_api'
+# Create a router and register our viewsets
+router = DefaultRouter()
+router.register(r'users', api_views.UserViewSet, basename='user')
 
 urlpatterns = [
-    # JWT Authentication
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-    
-    # User management API
-    path('register/', views.UserRegistrationAPIView.as_view(), name='register'),
-    path('profile/', views.UserProfileAPIView.as_view(), name='profile'),
-    path('change-password/', views.ChangePasswordAPIView.as_view(), name='change_password'),
-    
-    # User info
-    path('me/', views.CurrentUserAPIView.as_view(), name='current_user'),
+    path('', include(router.urls)),
+    path('profile/', api_views.ProfileAPIView.as_view(), name='api-profile'),
+    path('api-usage/', api_views.APIUsageAPIView.as_view(), name='api-usage'),
+    path('change-password/', api_views.ChangePasswordAPIView.as_view(), name='api-change-password'),
 ]

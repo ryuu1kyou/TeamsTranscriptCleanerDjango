@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}API使用状況 - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>API使用状況
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">${{ total_cost|floatformat:2 }}</h5>
+                                    <p class="card-text">総使用額</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">${{ usage_limit|floatformat:2 }}</h5>
+                                    <p class="card-text">使用制限</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>使用状況</h5>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar {% if budget_percentage > 80 %}bg-danger{% elif budget_percentage > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ budget_percentage }}%"
+                                 aria-valuenow="{{ budget_percentage }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ budget_percentage|floatformat:1 }}%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>使用済み: ${{ total_cost|floatformat:2 }}</span>
+                            <span>残り: ${{ remaining_budget|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>今月の使用額</h5>
+                        <p class="text-primary">${{ monthly_cost|floatformat:2 }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>最近のジョブ</h5>
+                        {% if recent_jobs %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>処理モード</th>
+                                        <th>ステータス</th>
+                                        <th>コスト</th>
+                                        <th>作成日時</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in recent_jobs %}
+                                    <tr>
+                                        <td>{{ job.id }}</td>
+                                        <td>{{ job.get_processing_mode_display }}</td>
+                                        <td>
+                                            <span class="badge {% if job.status == 'completed' %}bg-success{% elif job.status == 'failed' %}bg-danger{% elif job.status == 'processing' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                {{ job.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>${{ job.cost|floatformat:3 }}</td>
+                                        <td>{{ job.created_at|date:"Y-m-d H:i" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">最近のジョブはありません。</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>注意:</strong> API使用コストは、OpenAI APIの実際の使用料金に基づいて計算されます。
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>戻る
+                    </a>
+                    {% if user.total_api_cost > 0 %}
+                    <form method="post" action="{% url 'accounts:reset_api_cost' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('本当にAPI使用コストをリセットしますか？')">
+                            <i class="fas fa-undo me-1"></i>コストリセット
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}プロフィール - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>プロフィール
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-5x text-muted"></i>
+                            </div>
+                            <h4>{{ user.get_full_name|default:user.username }}</h4>
+                            <p class="text-muted">@{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <strong>メールアドレス:</strong>
+                                <p>{{ user.email }}</p>
+                            </div>
+                            {% if user.organization %}
+                            <div class="mb-3">
+                                <strong>組織:</strong>
+                                <p>{{ user.organization }}</p>
+                            </div>
+                            {% endif %}
+                            {% if user.userprofile.bio %}
+                            <div class="mb-3">
+                                <strong>自己紹介:</strong>
+                                <p>{{ user.userprofile.bio }}</p>
+                            </div>
+                            {% endif %}
+                            {% if user.userprofile.phone_number %}
+                            <div class="mb-3">
+                                <strong>電話番号:</strong>
+                                <p>{{ user.userprofile.phone_number }}</p>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <strong>アカウント作成日:</strong>
+                                <p>{{ user.created_at|date:"Y年m月d日" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ total_transcripts }}</h5>
+                                    <p class="card-text">トランスクリプト</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ total_jobs }}</h5>
+                                    <p class="card-text">処理ジョブ</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ successful_jobs }}</h5>
+                                    <p class="card-text">成功ジョブ</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>API使用状況:</strong>
+                                <div class="progress mt-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ user.api_budget_percentage_used }}%"
+                                         aria-valuenow="{{ user.api_budget_percentage_used }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ user.api_budget_percentage_used|floatformat:1 }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    ${{ user.total_api_cost }} / ${{ user.api_usage_limit }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>残り予算:</strong>
+                                <p class="text-success">${{ user.remaining_api_budget }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i>プロフィール編集
+                    </a>
+                    <a href="{% url 'accounts:change_password' %}" class="btn btn-secondary">
+                        <i class="fas fa-key me-1"></i>パスワード変更
+                    </a>
+                    <a href="{% url 'accounts:api_usage' %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-1"></i>API使用状況
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
