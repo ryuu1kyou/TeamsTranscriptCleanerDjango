@@ -1,7 +1,6 @@
 // Teams Transcript Cleaner - Workspace JavaScript
 
 // Global variables
-let sessionCost = 0.0;
 let originalText = '';
 let correctedText = '';
 
