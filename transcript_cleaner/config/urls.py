@@ -13,6 +13,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Authentication
+    # django-allauth URLs should come before the default auth URLs
+    path('accounts/', include('allauth.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/', include('apps.accounts.urls')),
     

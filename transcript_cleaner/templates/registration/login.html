@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load socialaccount %}
 
 {% block title %}ログイン{% endblock %}
 
@@ -51,6 +52,18 @@
                             <i class="fas fa-sign-in-alt me-1"></i>ログイン
                         </button>
                     </form>
+
+                    <div class="mt-3 text-center">
+                        <hr>
+                        <p>または、ソーシャルアカウントでログイン</p>
+
+                        <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger w-100 mb-2">
+                            <i class="fab fa-google me-2"></i>Googleでログイン
+                        </a>
+                        <a href="{% provider_login_url 'microsoft' %}" class="btn btn-outline-primary w-100">
+                            <i class="fab fa-microsoft me-2"></i>Microsoftでログイン
+                        </a>
+                    </div>
                 </div>
                 <div class="card-footer">
                     <div class="d-flex justify-content-between">

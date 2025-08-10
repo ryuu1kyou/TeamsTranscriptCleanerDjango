@@ -200,13 +200,51 @@ OPENAI_API_KEY=your-openai-api-key-here
 
 # Redis 設定 (Celery 用)
 REDIS_URL=redis://localhost:6379/0
+
+# ソーシャルログイン設定 (オプション)
+# Google
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Microsoft
+MICROSOFT_CLIENT_ID=your-microsoft-client-id
+MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
 ```
 
-### 4. Django アプリケーションの初期化
+### 4. ソーシャルログインの設定 (オプション)
+
+本アプリケーションでは、Google および Microsoft アカウントを使用したソーシャルログインをサポートしています。設定は任意ですが、利用する場合は以下の手順に従ってください。
+
+#### Google アカウントでのログイン設定
+
+1.  **Google Cloud Console** にアクセスします。
+2.  新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
+3.  **[API とサービス] > [認証情報]** に移動します。
+4.  **[認証情報を作成] > [OAuth クライアント ID]** を選択します。
+5.  アプリケーションの種類として **[ウェブ アプリケーション]** を選択します。
+6.  **承認済みの JavaScript 生成元** に以下を追加します:
+    - `http://127.0.0.1:8000`
+    - `http://localhost:8000`
+7.  **承認済みのリダイレクト URI** に以下を追加します:
+    - `http://127.0.0.1:8000/accounts/google/login/callback/`
+    - `http://localhost:8000/accounts/google/login/callback/`
+8.  作成後、**クライアント ID** と **クライアントシークレット** をコピーし、`.env` ファイルに設定します。
+
+#### Microsoft アカウントでのログイン設定
+
+1.  **Azure Active Directory** の管理センターにアクセスします。
+2.  **[アプリの登録] > [新規登録]** を選択します。
+3.  アプリケーションに名前を付け、サポートされるアカウントの種類を選択します。
+4.  **リダイレクト URI** に **[Web]** を選択し、以下を追加します:
+    - `http://127.0.0.1:8000/accounts/microsoft/login/callback/`
+    - `http://localhost:8000/accounts/microsoft/login/callback/`
+5.  登録後、**アプリケーション (クライアント) ID** をコピーして `.env` ファイルに設定します。
+6.  **[証明書とシークレット] > [新しいクライアント シークレット]** を作成し、その **値** をコピーして `.env` ファイルに設定します。
+
+### 5. Django アプリケーションの初期化
 
 ```bash
-# データベースマイグレーション
-python transcript_cleaner/manage.py makemigrations
+# データベースマイグレーションの適用
+# (ソーシャルアカウント機能のテーブルもここで作成されます)
 python transcript_cleaner/manage.py migrate
 
 # スーパーユーザーの作成
