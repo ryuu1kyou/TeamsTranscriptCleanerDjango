@@ -7,28 +7,40 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.conf.urls.i18n import i18n_patterns
 
+# 言語に依存しないURL
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
     
-    # Authentication
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/', include('apps.accounts.urls')),
+    # 言語切り替え用URL
+    path('i18n/', include('django.conf.urls.i18n')),
     
-    # Main web interface
-    path('', lambda request: redirect('transcripts:workspace') if request.user.is_authenticated else TemplateView.as_view(template_name='index.html')(request), name='home'),
-    path('transcripts/', include('apps.transcripts.urls')),
-    path('corrections/', include('apps.corrections.urls')),
-    path('wordlists/', include('apps.wordlists.urls')),
+    # OAuth callbacks (言語に依存しない)
+    path('accounts/', include('allauth.urls')),  # Google OAuth callbacks
     
-    # API routes
+    # API routes (言語に依存しない)
     path('api/v1/auth/', include('apps.accounts.api_urls')),
     path('api/v1/', include('apps.api.urls')),
     
     # Health check
     path('health/', TemplateView.as_view(template_name='health.html'), name='health'),
 ]
+
+# 多言語対応URL
+urlpatterns += i18n_patterns(
+    # Authentication (Google OAuth は上で処理済み)
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/', include('apps.accounts.urls')),
+    
+    # Main web interface
+    path('', lambda request: redirect('transcripts:list') if request.user.is_authenticated else redirect('accounts:login'), name='home'),
+    path('transcripts/', include('apps.transcripts.urls')),
+    
+    prefix_default_language=True,  # 全言語にプレフィックスを付ける
+)
 
 # Serve media files in development
 if settings.DEBUG:

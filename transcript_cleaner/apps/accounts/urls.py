@@ -44,6 +44,19 @@ urlpatterns = [
          name='password_reset_complete'),
     
     # Custom login/logout
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('set-language/', views.set_language_session, name='set_language'),
+    
+    # Role management API endpoints
+    path('api/roles/', views.get_roles, name='get_roles'),
+    path('api/roles/create/', views.create_role, name='create_role'),
+    path('api/roles/<int:role_id>/update/', views.update_role, name='update_role'),
+    path('api/roles/<int:role_id>/delete/', views.delete_role, name='delete_role'),
+    path('api/users/<int:user_id>/roles/', views.get_user_roles, name='get_user_roles'),
+    path('api/roles/assign/', views.assign_role, name='assign_role'),
+    path('api/roles/remove/', views.remove_role, name='remove_role'),
+    
+    # User management API endpoints
+    path('api/users/<int:user_id>/', views.get_user, name='get_user'),
 ]

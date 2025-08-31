@@ -151,3 +151,15 @@ Thumbs.db
 uploads/
 logs/
 temp/
+
+# Development artifacts
+.superdesign/
+.cursor/
+.spec/
+sample/
+*.md.backup
+check_independence.py
+setup.py
+SETUP_COMPLETE.md
+.windsurfrules
+仕様駆動開発.md

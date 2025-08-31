@@ -3,7 +3,8 @@ Views for user account management.
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash, authenticate
+from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -24,11 +25,56 @@ from rest_framework.views import APIView
 from rest_framework import serializers
 
 from .models import User, UserProfile
+from django.contrib.auth.models import Group
 from .forms import (
     CustomUserCreationForm, UserProfileForm, UserProfileExtendedForm, 
     ChangePasswordCustomForm
 )
 from ..corrections.models import CorrectionJob
+
+
+class CustomLoginView(LoginView):
+    """カスタムログインビュー - 言語設定処理付き"""
+    template_name = 'registration/login.html'
+    
+    def form_valid(self, form):
+        """ログイン成功時の処理"""
+        response = super().form_valid(form)
+        
+        # 言語設定を取得
+        language_preference = self.request.POST.get('language_preference', 'ja')
+        
+        # ユーザープロフィールの言語設定を更新
+        try:
+            profile = self.request.user.profile
+            profile.language_preference = language_preference
+            profile.save(update_fields=['language_preference'])
+        except UserProfile.DoesNotExist:
+            # プロフィールが存在しない場合は作成
+            UserProfile.objects.create(
+                user=self.request.user,
+                language_preference=language_preference
+            )
+        
+        return response
+
+
+@csrf_exempt
+def set_language_session(request):
+    """セッションに言語設定を保存"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            language = data.get('language', 'ja')
+            
+            # セッションに言語設定を保存
+            request.session['language_preference'] = language
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
 
 def register(request):
@@ -283,9 +329,196 @@ def logout_view(request):
     if request.method == 'POST':
         logout(request)
         messages.success(request, 'ログアウトしました。')
-        return redirect('transcripts:list')
+        return redirect('accounts:login')
     
     # For GET requests, you might want to show a confirmation page
     # But typically logout is handled via POST for security
-    # Redirect to home or show error
-    return redirect('transcripts:list')
+    # Redirect to login page
+    return redirect('accounts:login')
+
+
+# ============ Role Management Views ============
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_roles(request):
+    """Get all available roles (groups)."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    groups = Group.objects.all().order_by('name')
+    roles = [{'id': group.id, 'name': group.name} for group in groups]
+    return Response({'roles': roles})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_role(request):
+    """Create a new role (group)."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    name = request.data.get('name', '').strip()
+    if not name:
+        return Response({'error': 'Role name is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if Group.objects.filter(name=name).exists():
+        return Response({'error': 'Role already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    group = Group.objects.create(name=name)
+    return Response({'message': 'Role created successfully', 'role': {'id': group.id, 'name': group.name}})
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_role(request, role_id):
+    """Delete a role (group)."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        group = Group.objects.get(id=role_id)
+        # Don't allow deletion of built-in admin roles
+        if group.name in ['admin', 'superuser']:
+            return Response({'error': 'Cannot delete built-in role'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        group.delete()
+        return Response({'message': 'Role deleted successfully'})
+    except Group.DoesNotExist:
+        return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_roles(request, user_id):
+    """Get roles assigned to a specific user."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        user = User.objects.get(id=user_id)
+        roles = user.get_role_names()
+        return Response({'user_id': user_id, 'roles': roles})
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def assign_role(request):
+    """Assign a role to a user."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    user_id = request.data.get('user_id')
+    role_name = request.data.get('role_name')
+    
+    if not user_id or not role_name:
+        return Response({'error': 'user_id and role_name are required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(id=user_id)
+        group = Group.objects.get(name=role_name)
+        
+        if user.has_role(role_name):
+            return Response({'error': 'User already has this role'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.groups.add(group)
+        return Response({'message': f'Role {role_name} assigned to user successfully'})
+    
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Group.DoesNotExist:
+        return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_role(request):
+    """Remove a role from a user."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    user_id = request.data.get('user_id')
+    role_name = request.data.get('role_name')
+    
+    if not user_id or not role_name:
+        return Response({'error': 'user_id and role_name are required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(id=user_id)
+        group = Group.objects.get(name=role_name)
+        
+        if not user.has_role(role_name):
+            return Response({'error': 'User does not have this role'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Don't allow removal of admin role from superuser
+        if role_name in ['admin', 'superuser'] and user.is_superuser:
+            return Response({'error': 'Cannot remove admin role from superuser'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.groups.remove(group)
+        return Response({'message': f'Role {role_name} removed from user successfully'})
+    
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Group.DoesNotExist:
+        return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user(request, user_id):
+    """Get user information by ID."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        user = User.objects.get(id=user_id)
+        return Response({
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_active': user.is_active,
+            'is_superuser': user.is_superuser,
+            'date_joined': user.date_joined.isoformat(),
+            'last_login': user.last_login.isoformat() if user.last_login else None,
+        })
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_role(request, role_id):
+    """Update a role name."""
+    if not request.user.can_manage_users():
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    new_name = request.data.get('name', '').strip()
+    if not new_name:
+        return Response({'error': 'Role name is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        group = Group.objects.get(id=role_id)
+        
+        # Don't allow renaming of built-in admin roles
+        if group.name in ['admin', 'superuser']:
+            return Response({'error': 'Cannot rename built-in role'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if new name already exists
+        if Group.objects.filter(name=new_name).exclude(id=role_id).exists():
+            return Response({'error': 'Role name already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        old_name = group.name
+        group.name = new_name
+        group.save()
+        
+        return Response({
+            'message': f'Role renamed from {old_name} to {new_name}',
+            'role': {'id': group.id, 'name': group.name}
+        })
+    
+    except Group.DoesNotExist:
+        return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)

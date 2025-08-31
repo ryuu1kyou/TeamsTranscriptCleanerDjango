@@ -82,19 +82,6 @@ mysql -u root -p
 sudo mysql -u root -p
 ```
 
-**Docker で MySQL を使用する場合:**
-
-```bash
-# MySQL 8.0 コンテナを起動
-docker run --name mysql-transcript-db \
-  -e MYSQL_ROOT_PASSWORD=rootpassword \
-  -e MYSQL_DATABASE=transcript_cleaner_django \
-  -d -p 3306:3306 mysql:8.0
-
-# コンテナに接続してMySQL コマンドラインを起動
-docker exec -it mysql-transcript-db mysql -u root -p
-```
-
 #### データベースとユーザーの作成
 
 MySQL に root ユーザーでログイン後、以下のコマンドを順に実行：
@@ -231,29 +218,29 @@ python transcript_cleaner/manage.py runserver
 ## プロジェクト構造
 
 ```
-django/
-├── transcript_cleaner/           # メインプロジェクト
-│   ├── config/                  # 設定ファイル
-│   │   ├── settings/           # 環境別設定
-│   │   ├── urls.py            # URL 設定
-│   │   ├── wsgi.py            # WSGI 設定
-│   │   └── asgi.py            # ASGI 設定
-│   ├── apps/                   # Django アプリ
-│   │   ├── accounts/          # ユーザー管理
-│   │   ├── transcripts/       # トランスクリプト管理
-│   │   ├── corrections/       # 修正ジョブ管理
-│   │   ├── wordlists/         # ワードリスト管理
-│   │   └── api/               # API エンドポイント
-│   ├── templates/             # HTML テンプレート
-│   ├── static/                # 静的ファイル
-│   ├── media/                 # アップロードファイル
-│   └── manage.py              # Django 管理コマンド
-├── processing/                 # 処理ロジック
-│   ├── openai_service.py      # OpenAI API 統合
-│   └── csv_parser.py          # CSV パーサー
-├── requirements.txt           # Python 依存関係
-├── .env.example              # 環境変数テンプレート
-└── README.md                 # このファイル
+TeamsTranscriptCleanerDjango/
+├── transcript_cleaner/         # メインプロジェクト
+│   ├── config/                # 設定ファイル
+│   │   ├── settings.py       # Django 設定
+│   │   ├── urls.py           # URL 設定
+│   │   ├── wsgi.py           # WSGI 設定
+│   │   └── asgi.py           # ASGI 設定
+│   ├── apps/                  # Django アプリ
+│   │   ├── accounts/         # ユーザー管理
+│   │   ├── transcripts/      # トランスクリプト管理
+│   │   ├── corrections/      # 修正ジョブ管理
+│   │   ├── wordlists/        # ワードリスト管理
+│   │   └── api/              # API エンドポイント
+│   ├── templates/            # HTML テンプレート
+│   ├── static/               # 静的ファイル
+│   └── manage.py             # Django 管理コマンド
+├── processing/               # 処理ロジック
+│   ├── openai_service.py     # OpenAI API 統合
+│   └── csv_parser.py         # CSV パーサー
+├── requirements.txt          # Python 依存関係
+├── .env.example             # 環境変数テンプレート
+├── CLAUDE.md                # 技術仕様書
+└── README.md                # このファイル
 ```
 
 ## 主要機能の使用方法
@@ -408,6 +395,8 @@ Client.__init__() got an unexpected keyword argument 'proxies'
 ```bash
 pip install openai==1.95.1
 ```
+
+**注意**: 現在のrequirements.txtは`openai==1.6.1`ですが、最新版への更新を推奨
 
 #### データ型変換エラー
 **症状**: JSON応答でコストが文字列として表示される  

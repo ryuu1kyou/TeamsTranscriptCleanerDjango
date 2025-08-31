@@ -1,0 +1,42 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block nav-global %}
+    <div id="user-tools">
+        <a href="/transcripts/workspace/" class="btn btn-primary btn-sm me-2" style="color: white; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">
+            <i class="fas fa-arrow-left"></i> アプリに戻る
+        </a>
+        {% if has_permission %}
+            {% url 'admin:index' as admin_index_url %}
+            <a href="{{ admin_index_url }}">管理</a>
+        {% endif %}
+        <a href="{% url 'admin:logout' %}">ログアウト</a>
+    </div>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #user-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #user-tools a {
+            color: #ffc;
+            text-decoration: none;
+        }
+        
+        #user-tools .btn-primary {
+            background-color: #417690 !important;
+            border-color: #417690 !important;
+        }
+        
+        #user-tools .btn-primary:hover {
+            background-color: #2c5282 !important;
+            border-color: #2c5282 !important;
+        }
+    </style>
+{% endblock %}

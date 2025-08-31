@@ -48,19 +48,19 @@ def check_api_key(request):
     
     if not openai_api_key:
         return JsonResponse({
-            'status': 'missing',
+            'has_api_key': False,
             'message': 'OpenAI API key not configured'
         })
     
     # Simple validation - check if key looks like a valid format
     if openai_api_key.startswith('sk-') and len(openai_api_key) > 20:
         return JsonResponse({
-            'status': 'valid',
+            'has_api_key': True,
             'message': 'API key is configured'
         })
     else:
         return JsonResponse({
-            'status': 'invalid',
+            'has_api_key': False,
             'message': 'API key format appears invalid'
         })
 
@@ -156,10 +156,88 @@ def execute_correction(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@csrf_exempt
+def correct_text_endpoint(request):
+    """Text correction endpoint matching app.py functionality."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        
+        text = data.get('text', '')
+        processing_mode = data.get('processing_mode', 'misspelling')
+        model = data.get('model', 'gpt-4o')
+        custom_prompt = data.get('custom_prompt', '')
+        correction_words = data.get('correction_words', [])
+        
+        if not text:
+            return JsonResponse({'error': 'Text is required'}, status=400)
+        
+        # Import processing modules
+        try:
+            from processing.openai_api import correct_text
+        except ImportError:
+            return JsonResponse({'error': 'Processing module not available'}, status=500)
+        
+        # Execute correction
+        try:
+            corrected_text, cost = correct_text(
+                processing_mode,
+                custom_prompt,
+                text,
+                correction_words,
+                model
+            )
+            
+            # Update user's API cost
+            if hasattr(request.user, 'total_api_cost'):
+                from decimal import Decimal
+                request.user.total_api_cost += Decimal(str(cost))
+                request.user.save()
+            
+            return JsonResponse({
+                'success': True,
+                'corrected_text': corrected_text,
+                'cost': float(cost)
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt  
+def reset_cost_endpoint(request):
+    """Reset user API cost."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    try:
+        if hasattr(request.user, 'total_api_cost'):
+            request.user.total_api_cost = 0
+            request.user.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 urlpatterns = [
     path('health/', health_check, name='health'),
     path('info/', api_info, name='info'),
     path('check-api-key/', check_api_key, name='check_api_key'),
+    path('correct-text/', correct_text_endpoint, name='correct_text'),
+    path('reset-cost/', reset_cost_endpoint, name='reset_cost'),
     path('corrections/execute/', execute_correction, name='execute_correction'),
 ]

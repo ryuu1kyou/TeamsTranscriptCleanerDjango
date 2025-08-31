@@ -1,342 +1,1715 @@
-{% extends "base_workspace.html" %}
-{% load static %}
-
-{% block title %}Teams Transcript Cleaner - メインワークスペース{% endblock %}
-
-{% block extra_head %}
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams Transcript Cleaner</title>
 <style>
-.workspace-container {
-    display: flex;
-    height: calc(100vh - 100px);
-    gap: 20px;
+/* ページレイアウト */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #fafafa;
 }
 
+.page-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* サイドバー (左側) */
 .sidebar {
-    width: 30%;
-    background: #f8f9fa;
-    border-radius: 8px;
+    width: 22.5%; /* 30%の3/4 = 22.5% */
+    min-width: 250px;
+    max-width: 40%;
+    background: white;
+    border-right: 1px solid #e6e6e6;
     padding: 20px;
     overflow-y: auto;
-    border: 1px solid #dee2e6;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    resize: horizontal;
+    position: relative;
 }
 
+.sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: transparent;
+    cursor: e-resize;
+}
+
+.sidebar h2 {
+    color: #262730;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ff4b4b;
+    padding-bottom: 10px;
+}
+
+.sidebar h3 {
+    color: #262730;
+    font-size: 1.1rem;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* メインエリア (右側) */
 .main-area {
-    width: 70%;
+    flex: 1; /* 残り全体を使用 */
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    background: white;
+    padding: 20px;
 }
 
+.main-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.main-header h1 {
+    color: #262730;
+    font-size: 2rem;
+    margin: 0 0 10px 0;
+    font-weight: 300;
+}
+
+.user-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* テキストカラム */
 .text-columns {
     display: flex;
-    gap: 15px;
-    height: 450px;
+    gap: 20px;
+    height: 400px;
+    margin-bottom: 20px;
 }
 
 .text-column {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+}
+
+.text-column h4 {
+    color: #262730;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-weight: 600;
 }
 
 .text-area {
-    flex: 1;
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    border: 1px solid #e6e6e6;
+    border-radius: 5px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
     line-height: 1.5;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    padding: 12px;
     resize: none;
+    background: #fafafa;
 }
 
-.sidebar-section {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e0e0e0;
+.text-area:focus {
+    outline: none;
+    border-color: #ff4b4b;
+    box-shadow: 0 0 0 2px rgba(255, 75, 75, 0.1);
 }
 
-.sidebar-section:last-child {
-    border-bottom: none;
-}
-
-.cost-info {
-    background: #e3f2fd;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    border-left: 4px solid #2196f3;
-}
-
-.model-price {
-    font-size: 12px;
+.text-area[readonly] {
+    background: #f0f0f0;
     color: #666;
-    margin-top: 5px;
 }
 
+/* フォーム要素 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #262730;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-select, .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e6e6e6;
+    border-radius: 5px;
+    background: white;
+    font-size: 14px;
+}
+
+.form-select:focus, .form-control:focus {
+    outline: none;
+    border-color: #ff4b4b;
+    box-shadow: 0 0 0 2px rgba(255, 75, 75, 0.1);
+}
+
+.form-textarea {
+    height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* ボタン */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #ff4b4b;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #e63946;
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-block {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* 情報ボックス */
+.info-box {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #0066cc;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #856404;
+}
+
+.success-box {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #155724;
+}
+
+/* 処理モード */
 .processing-mode {
-    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
 .processing-mode label {
-    display: block;
-    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #e6e6e6;
+    border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-.csv-editor {
-    height: 150px;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 12px;
-}
-
-.diff-viewer {
+.processing-mode label:hover {
     background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
+}
+
+.processing-mode input[type="radio"] {
+    margin-right: 8px;
+}
+
+/* 差分表示 */
+.diff-container {
+    border: 1px solid #e6e6e6;
+    border-radius: 5px;
     padding: 15px;
-    max-height: 200px;
+    background: white;
+    max-height: 300px;
     overflow-y: auto;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
+    margin-bottom: 20px;
 }
 
 .diff-added {
     background-color: #aaffaa;
-    padding: 2px 4px;
-    border-radius: 3px;
+    text-decoration: none;
 }
 
 .diff-removed {
     background-color: #ffaaaa;
-    padding: 2px 4px;
-    border-radius: 3px;
+    text-decoration: line-through;
 }
 
+/* ボタン行 */
 .button-row {
     display: flex;
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 20px;
 }
 
 .button-row .btn {
     flex: 1;
 }
 
-.file-info {
-    background: #e8f5e8;
-    padding: 10px;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-size: 14px;
-    border-left: 4px solid #4caf50;
+/* チェックボックス */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
-.warning-info {
-    background: #fff3cd;
-    padding: 10px;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-size: 14px;
-    border-left: 4px solid #ffc107;
-    color: #856404;
+.checkbox-container input[type="checkbox"] {
+    margin-right: 8px;
 }
 
-.correction-button {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    border: none;
-    color: white;
-    padding: 12px 25px;
-    font-size: 16px;
-    font-weight: bold;
+/* ユーザー管理ボタン */
+.user-management {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+/* 言語選択ボタン */
+.language-selector-fixed {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.language-select {
+    border: 1px solid #e1e5e9;
     border-radius: 8px;
-    width: 100%;
-    margin: 15px 0;
+    padding: 10px 16px;
+    font-size: 14px;
+    background: white;
+    color: #495057;
+    outline: none;
+    cursor: pointer;
+    min-width: 150px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.language-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.language-select:hover {
+    border-color: #667eea;
+}
+
+/* アップロードエリア */
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: #fafafa;
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.correction-button:hover:not(:disabled) {
-    background: linear-gradient(45deg, #0056b3, #004085);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+.upload-area:hover {
+    border-color: #ff4b4b;
+    background: #f5f5f5;
 }
 
-.correction-button:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
+.upload-area.dragover {
+    border-color: #ff4b4b;
+    background: #fff0f0;
 }
 
-.form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.upload-area p {
+    margin: 5px 0;
+    color: #666;
 }
 
-.form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.upload-area small {
+    color: #999;
+}
+
+/* アップロード済みファイル表示 */
+.uploaded-file {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.file-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.file-name {
+    flex: 1;
+    margin-right: 8px;
+    font-weight: 500;
+}
+
+.file-size {
+    color: #666;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.file-remove {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-remove:hover {
+    color: #ff4b4b;
+}
+
+/* ユーザー管理スタイル */
+.content-section {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.user-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e6e6e6;
+    margin-bottom: 20px;
+}
+
+.management-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #e6e6e6;
+    margin-bottom: -1px;
+}
+.tab-btn {
+    background: none;
+    border: 1px solid #e6e6e6;
+    border-bottom: 1px solid #e6e6e6;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    border-radius: 6px 6px 0 0;
+    margin-right: 2px;
+    position: relative;
+    z-index: 1;
+}
+.tab-btn:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+.tab-btn.active {
+    background-color: white;
+    color: #495057;
+    border-bottom: 1px solid white;
+    font-weight: 500;
+    z-index: 2;
+}
+.management-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.management-tab-content {
+    padding: 0 20px;
+}
+
+.user-controls, .role-controls {
+    margin-bottom: 20px;
+}
+
+.user-table, .role-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.user-table th,
+.user-table td,
+.role-table th,
+.role-table td {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e6e6e6;
+    font-size: 14px;
+}
+
+.user-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #262730;
+}
+
+.user-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.user-status {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.user-status.active {
+    background-color: #28a745;
+}
+
+.user-status.inactive {
+    background-color: #dc3545;
+}
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.user-actions .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .page-container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #e6e6e6;
+    }
+    
+    .main-area {
+        width: 100%;
+    }
+    
+    .text-columns {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .text-area {
+        height: 200px;
+    }
+    
+    .button-row {
+        flex-direction: column;
+    }
 }
 </style>
-{% endblock %}
+</head>
+<body>
+<div class="page-container">
+    <!-- サイドバー (左3割) -->
+    <div class="sidebar">
+        <h2>{% trans "設定" %}</h2>
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col">
-            <h2 class="mb-0">
-                <i class="fas fa-file-text me-2"></i>
-                Teams Transcript Cleaner
-            </h2>
-            <p class="text-muted">Microsoft Teams会議録のAI修正システム</p>
-        </div>
-        <div class="col-auto">
-            <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-primary">{{ user.get_full_name|default:user.username }}</span>
-                <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-sign-out-alt me-1"></i>ログアウト
-                </a>
+        <!-- APIキー設定 -->
+        <div class="form-group">
+            <div id="api-key-status" class="info-box">
+                APIキー確認中...
             </div>
         </div>
-    </div>
 
-    <div class="workspace-container">
-        <!-- サイドバー -->
-        <div class="sidebar">
-            <div class="sidebar-section">
-                <h5><i class="fas fa-cog me-2"></i>設定</h5>
-                
-                <!-- APIキー状況 -->
-                <div class="mb-3">
-                    <div id="api-key-status" class="cost-info">
-                        <i class="fas fa-key me-2"></i>
-                        <span id="api-key-text">APIキー確認中...</span>
-                    </div>
-                </div>
-
-                <!-- コスト情報 -->
-                <div class="cost-info">
-                    <div><strong>累計使用コスト:</strong> $<span id="total-cost">{{ user.total_api_cost|floatformat:4 }}</span> USD</div>
-                    <div><strong>使用制限:</strong> ${{ user.api_usage_limit }} USD</div>
-                    <div><strong>残り予算:</strong> $<span id="remaining-budget">{{ user.remaining_api_budget|floatformat:4 }}</span> USD</div>
-                </div>
-                
-                <div class="cost-info mt-2">
-                    <div><strong>現在のセッション:</strong> $<span id="session-cost">0.0000</span> USD</div>
-                </div>
-                
-                <button class="btn btn-outline-danger btn-sm mt-2" onclick="resetCost()">
-                    <i class="fas fa-redo me-1"></i>コスト履歴リセット
-                </button>
+        <!-- コスト情報 -->
+        <div class="form-group">
+            <h3 id="cost-info-title">コスト情報</h3>
+            <div class="info-box">
+                累計使用コスト: $<span id="total-cost">{{ user.total_api_cost|floatformat:4 }}</span> USD
             </div>
-
-            <div class="sidebar-section">
-                <h6><i class="fas fa-robot me-2"></i>OpenAIモデル選択</h6>
-                <select class="form-select" id="ai-model" onchange="updateModelPrice()">
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                </select>
-                <div class="model-price" id="model-price">料金: $0.01 USD / 1000トークン</div>
+            <div class="info-box">
+                現在のセッションコスト: $<span id="session-cost">0.0000</span> USD
             </div>
-
-            <div class="sidebar-section">
-                <h6><i class="fas fa-tools me-2"></i>処理モード選択</h6>
-                <div class="processing-mode">
-                    <label>
-                        <input type="radio" name="processing_mode" value="misspelling" checked>
-                        <i class="fas fa-spell-check me-2"></i>誤字脱字修正
-                    </label>
-                    <label>
-                        <input type="radio" name="processing_mode" value="grammar">
-                        <i class="fas fa-language me-2"></i>文法訂正
-                    </label>
-                    <label>
-                        <input type="radio" name="processing_mode" value="summarize">
-                        <i class="fas fa-compress-alt me-2"></i>要約
-                    </label>
-                </div>
-                
-                <div class="mt-3">
-                    <label for="custom-prompt" class="form-label">追加の指示</label>
-                    <textarea class="form-control" id="custom-prompt" rows="3" 
-                        placeholder="例: 誤字脱字モード「特に人名を重点的に確認」、要約モード「300字以内で結論を先に」"></textarea>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <h6><i class="fas fa-upload me-2"></i>ファイルアップロード</h6>
-                
-                <!-- TXTファイル -->
-                <div class="mb-3">
-                    <label for="txt-upload" class="form-label">訂正前議事録（TXT）</label>
-                    <input type="file" class="form-control" id="txt-upload" accept=".txt" onchange="loadTxtFile(this)">
-                    <div id="txt-file-info"></div>
-                </div>
-
-                <!-- CSVファイル（誤字脱字モードのみ） -->
-                <div id="csv-section" class="mb-3">
-                    <label for="csv-upload" class="form-label">誤字脱字一覧（CSV）</label>
-                    <input type="file" class="form-control" id="csv-upload" accept=".csv" onchange="loadCsvFile(this)">
-                </div>
-
-                <!-- CSV編集エリア -->
-                <div id="csv-editor-section">
-                    <h6>誤字脱字一覧編集</h6>
-                    <textarea class="form-control csv-editor" id="csv-editor" 
-                        placeholder="誤,正&#10;マイクロソフト,Microsoft&#10;エクセル,Excel"></textarea>
-                </div>
-            </div>
-
-            <!-- 訂正実行ボタン -->
-            <button class="correction-button" id="correction-button" onclick="executeCorrection()" disabled>
-                <i class="fas fa-magic me-2"></i>訂正実行
+            <button class="btn btn-outline-secondary btn-sm mt-2" onclick="resetCost()">
+                <span id="reset-cost-btn">コスト履歴をリセット</span>
             </button>
         </div>
 
-        <!-- メインエリア -->
-        <div class="main-area">
-            <div class="text-columns">
-                <!-- 訂正前 -->
-                <div class="text-column">
-                    <h5><i class="fas fa-file-alt me-2"></i>訂正前のファイル内容（編集不可）</h5>
-                    <textarea class="text-area" id="original-text" readonly 
-                        placeholder="左のサイドバーからTXTファイルをアップロードしてください"></textarea>
-                </div>
+        <!-- OpenAIモデル選択 -->
+        <div class="form-group">
+            <label class="form-label">{% trans "OpenAIモデル選択" %}</label>
+            <select class="form-select" id="ai-model" onchange="updateModelPrice()">
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            </select>
+            <div class="info-box" id="model-price-text">料金: $<span id="model-price">0.01</span> USD / 1000トークン</div>
+        </div>
 
-                <!-- 訂正後 -->
-                <div class="text-column">
-                    <h5><i class="fas fa-edit me-2"></i>訂正後のファイル内容（手修正可）</h5>
-                    <textarea class="text-area" id="corrected-text" 
-                        placeholder="訂正実行後にここに結果が表示されます"
-                        oninput="updateDiff()"></textarea>
+        <!-- 処理モード選択 -->
+        <div class="form-group">
+            <label class="form-label">{% trans "処理モード選択" %}</label>
+            <div class="processing-mode">
+                <label>
+                    <input type="radio" name="processing_mode" value="misspelling" checked>
+                    <span>{% trans "誤字脱字修正" %}</span>
+                </label>
+                <label>
+                    <input type="radio" name="processing_mode" value="grammar">
+                    <span>{% trans "文法訂正" %}</span>
+                </label>
+                <label>
+                    <input type="radio" name="processing_mode" value="summarize">
+                    <span>{% trans "要約" %}</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 追加の指示 -->
+        <div class="form-group">
+            <label class="form-label">{% trans "追加の指示（モードに応じて入力）" %}</label>
+            <textarea class="form-control form-textarea" id="custom-prompt" 
+                placeholder="例: 誤字脱字モード「特に人名を重点的に確認」、要約モード「300字以内で結論を先に」"></textarea>
+        </div>
+
+        <!-- ファイルアップロード -->
+        <div class="form-group">
+            <label class="form-label">{% trans "訂正前議事録（TXT）アップロード" %}</label>
+            <div class="upload-area" id="txt-drop-area">
+                <p>Drag and drop file here</p>
+                <p><small>Limit 200MB per file • TXT</small></p>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('txt-upload').click()">
+                    Browse files
+                </button>
+                <input type="file" class="form-control" id="txt-upload" accept=".txt" style="display: none;" onchange="handleTxtUpload(event)">
+            </div>
+            <div id="uploaded-file-info" style="display: none; margin-top: 10px;">
+                <div class="uploaded-file">
+                    <span class="file-icon">📄</span>
+                    <span class="file-name" id="file-name"></span>
+                    <span class="file-size" id="file-size"></span>
+                    <button class="file-remove" onclick="removeFile()">&times;</button>
                 </div>
             </div>
+            <div id="text-stats" class="info-box" style="display: none; margin-top: 10px;">
+                <div id="text-statistics"></div>
+            </div>
+        </div>
 
-            <!-- 差分表示 -->
-            <div class="mt-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="show-diff" onchange="toggleDiff()">
-                    <label class="form-check-label" for="show-diff">
-                        <i class="fas fa-exchange-alt me-2"></i>差分表示
-                    </label>
+        <!-- 誤字脱字一覧 (誤字脱字修正モードのみ) -->
+        <div id="csv-section" class="form-group">
+            <label class="form-label">{% trans "誤字脱字一覧 (CSV) アップロード" %}</label>
+            <div class="upload-area" id="csv-drop-area">
+                <p>Drag and drop file here</p>
+                <p><small>Limit 200MB per file • CSV</small></p>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('csv-upload').click()">
+                    Browse files
+                </button>
+                <input type="file" class="form-control" id="csv-upload" accept=".csv" style="display: none;" onchange="handleCsvUpload(event)">
+            </div>
+            <div id="csv-file-info" style="display: none; margin-top: 10px;">
+                <div class="uploaded-file">
+                    <span class="file-icon">📊</span>
+                    <span class="file-name" id="csv-file-name"></span>
+                    <span class="file-size" id="csv-file-size"></span>
+                    <button class="file-remove" onclick="removeCsvFile()">&times;</button>
                 </div>
-                <div id="diff-viewer" class="diff-viewer mt-2" style="display: none;"></div>
+            </div>
+            
+            <!-- 誤字脱字一覧編集 -->
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="form-label" id="csv-edit-label">誤字脱字一覧編集</label>
+                <textarea class="form-control form-textarea" id="csv-text" style="height: 150px;" placeholder="誤,正&#10;例文,例文">誤,正</textarea>
+            </div>
+        </div>
+
+        <!-- 訂正実行ボタン -->
+        <button class="btn btn-primary btn-block" id="correction-btn" onclick="runCorrection()" disabled>
+            <span id="execute-btn-text">訂正実行</span>
+        </button>
+        
+        <!-- 管理ボタン -->
+        <div class="form-group" style="margin-top: 20px; border-top: 1px solid #e6e6e6; padding-top: 20px;">
+            <button class="btn btn-secondary btn-block" onclick="toggleUserManagement()">
+                <span>{% trans "管理" %}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- メインエリア (右7割) -->
+    <div class="main-area">
+        <!-- トランスクリプト処理画面 -->
+        <div id="transcript-area" class="content-section">
+            <div class="main-header">
+                <h1 id="main-title">Teams Transcript Cleaner</h1>
+                <div class="user-info">
+                    <span>ユーザー: {{ user.get_full_name|default:user.username }}</span>
+                    <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <span id="logout-btn">ログアウト</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- テキストエリア -->
+            <div class="text-columns">
+                <div class="text-column">
+                    <h4>{% trans "訂正前のファイル内容（編集不可）" %}</h4>
+                    <textarea class="text-area" id="original-text" placeholder="{% trans 'テキストファイルをアップロードしてください' %}" readonly></textarea>
+                </div>
+                <div class="text-column">
+                    <h4>{% trans "訂正後のファイル内容（手修正可）" %}</h4>
+                    <textarea class="text-area" id="corrected-text" placeholder="{% trans '訂正実行後に結果が表示されます' %}" onkeyup="updateCorrectedText()"></textarea>
+                </div>
             </div>
 
             <!-- ボタン行 -->
             <div class="button-row">
-                <button class="btn btn-outline-primary" onclick="copyToOriginal()" id="copy-button" disabled>
-                    <i class="fas fa-copy me-2"></i>訂正後テキストを訂正前にコピー
+                <button class="btn btn-secondary" onclick="copyToOriginal()" disabled id="copy-btn">
+                    <span id="copy-to-original-btn">訂正後テキストを訂正前にコピー</span>
                 </button>
-                <button class="btn btn-success" onclick="downloadResult()" id="download-button" disabled>
-                    <i class="fas fa-download me-2"></i>最終確定ダウンロード
+                <button class="btn btn-primary" onclick="downloadResult()" disabled id="download-btn">
+                    <span id="final-download-btn">最終確定ダウンロード</span>
                 </button>
+            </div>
+        </div>
+        
+        <!-- ユーザー管理画面 -->
+        <div id="user-management-area" class="content-section" style="display: none;">
+            <div class="user-management-header">
+                <div class="management-tabs">
+                    <button class="tab-btn active" onclick="showUserManagement()" id="user-tab-btn">
+                        <span>ユーザー管理</span>
+                    </button>
+                    <button class="tab-btn" onclick="showRoleManagement()" id="role-tab-btn">
+                        <span>ロール管理</span>
+                    </button>
+                </div>
+                <div class="management-buttons">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleUserManagement()">
+                        <span id="back-to-main">メイン画面に戻る</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ユーザー管理タブコンテンツ -->
+            <div id="user-tab" class="management-tab-content">
+                <div class="user-controls">
+                    <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">
+                        <span id="add-user-btn">+ 新規ユーザー</span>
+                    </button>
+                </div>
+                
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th id="username-header">ユーザー名</th>
+                            <th id="email-header">メールアドレス</th>
+                            <th id="firstname-header">名前</th>
+                            <th id="lastname-header">姓</th>
+                            <th id="roles-header">ロール</th>
+                            <th id="active-header">アクティブ</th>
+                            <th id="staff-header">スタッフ</th>
+                            <th id="superuser-header">スーパーユーザー</th>
+                            <th id="lastlogin-header">最終ログイン</th>
+                            <th id="actions-header">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        <!-- ユーザーデータがここに動的に挿入される -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- ロール管理タブコンテンツ -->
+            <div id="role-tab" class="management-tab-content" style="display: none;">
+                <div class="role-controls">
+                    <button class="btn btn-primary btn-sm" onclick="showAddRoleModal()">
+                        <span id="add-role-btn">+ 新規ロール</span>
+                    </button>
+                </div>
+                
+                <table class="role-table">
+                    <thead>
+                        <tr>
+                            <th id="role-name-header">ロール名</th>
+                            <th id="role-permissions-header">権限</th>
+                            <th id="role-users-count-header">ユーザー数</th>
+                            <th id="role-created-header">作成日</th>
+                            <th id="role-actions-header">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="role-table-body">
+                        <!-- ロールデータがここに動的に挿入される -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- CSRF Token for JavaScript -->
+
+<!-- 言語選択ボタン -->
+<div class="language-selector-fixed">
+    <form action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <select name="language" class="language-select" onchange="this.form.submit()">
+            <option value="ja" {% if LANGUAGE_CODE == 'ja' %}selected{% endif %}>🇯🇵 日本語</option>
+            <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>🇺🇸 English</option>
+        </select>
+    </form>
+</div>
+
+<script>
+
+// グローバル変数
+let isUserManagementVisible = false;
+let originalText = '';
+let correctedText = '';
+let correctedTextEdited = '';
+let correctionWords = [];
+let csvText = '誤,正';
+let sessionCost = 0.0;
+let processingMode = 'misspelling';
+
+// モデル料金設定
+const MODEL_PRICING = {
+    'gpt-4o': 0.01,
+    'gpt-4o-mini': 0.005,
+    'gpt-4-turbo': 0.01,
+    'gpt-4': 0.03,
+    'gpt-3.5-turbo': 0.0015
+};
+
+// 初期化
+document.addEventListener('DOMContentLoaded', function() {
+    updateProcessingMode();
+    updateModelPrice();
+    checkApiKey();
+    setupDragAndDrop();
+    
+    // 処理モード変更イベント
+    document.querySelectorAll('input[name="processing_mode"]').forEach(radio => {
+        radio.addEventListener('change', updateProcessingMode);
+    });
+});
+
+// ドラッグ&ドロップ機能
+function setupDragAndDrop() {
+    const txtDropArea = document.getElementById('txt-drop-area');
+    const csvDropArea = document.getElementById('csv-drop-area');
+    
+    // TXTファイル用
+    txtDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        txtDropArea.classList.add('dragover');
+    });
+    
+    txtDropArea.addEventListener('dragleave', () => {
+        txtDropArea.classList.remove('dragover');
+    });
+    
+    txtDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        txtDropArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+                handleTxtUpload({target: {files: [file]}});
+            }
+        }
+    });
+    
+    // CSVファイル用
+    csvDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        csvDropArea.classList.add('dragover');
+    });
+    
+    csvDropArea.addEventListener('dragleave', () => {
+        csvDropArea.classList.remove('dragover');
+    });
+    
+    csvDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        csvDropArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                handleCsvUpload({target: {files: [file]}});
+            }
+        }
+    });
+}
+
+// ユーザー管理画面切り替え
+function toggleUserManagement() {
+    const transcriptArea = document.getElementById('transcript-area');
+    const userManagementArea = document.getElementById('user-management-area');
+    
+    if (isUserManagementVisible) {
+        transcriptArea.style.display = 'block';
+        userManagementArea.style.display = 'none';
+        isUserManagementVisible = false;
+    } else {
+        transcriptArea.style.display = 'none';
+        userManagementArea.style.display = 'block';
+        isUserManagementVisible = true;
+        
+        // デフォルトでユーザー管理タブを表示
+        showUserManagement();
+        loadUserList();
+    }
+}
+
+// ユーザーリストを読み込み
+async function loadUserList() {
+    // デモデータを表示
+    displayUserList([
+        {id: 1, username: 'admin', email: 'admin@example.com', first_name: 'Admin', last_name: 'User', is_active: true, is_staff: true, is_superuser: true, last_login: '2025-01-15T10:30:00Z'},
+        {id: 2, username: 'user1', email: 'user1@example.com', first_name: '太郎', last_name: '田中', is_active: true, is_staff: false, is_superuser: false, last_login: '2025-01-14T14:22:00Z'},
+        {id: 3, username: 'user2', email: 'user2@example.com', first_name: '花子', last_name: '佐藤', is_active: false, is_staff: false, is_superuser: false, last_login: null}
+    ]);
+}
+
+// ユーザーリスト表示
+function displayUserList(users) {
+    const tbody = document.getElementById('user-table-body');
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.first_name || '-'}</td>
+            <td>${user.last_name || '-'}</td>
+            <td><span class="user-status ${user.is_active ? 'active' : 'inactive'}"></span>${user.is_active ? 'アクティブ' : '無効'}</td>
+            <td>${user.is_staff ? 'Yes' : 'No'}</td>
+            <td>${user.is_superuser ? 'Yes' : 'No'}</td>
+            <td>${user.last_login ? new Date(user.last_login).toLocaleDateString() : '-'}</td>
+            <td class="user-actions">
+                <button class="btn btn-outline-primary btn-sm" onclick="editUser(${user.id})">編集</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteUser(${user.id})">削除</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ユーザー編集（ロール管理）
+async function editUser(userId) {
+    try {
+        // ユーザー情報とロール情報を取得
+        const [userResponse, rolesResponse, userRolesResponse] = await Promise.all([
+            fetch(`/accounts/api/users/${userId}/`, {
+                headers: {'X-CSRFToken': getCSRFToken()},
+                credentials: 'same-origin'
+            }),
+            fetch('/accounts/api/roles/', {
+                headers: {'X-CSRFToken': getCSRFToken()},
+                credentials: 'same-origin'
+            }),
+            fetch(`/accounts/api/users/${userId}/roles/`, {
+                headers: {'X-CSRFToken': getCSRFToken()},
+                credentials: 'same-origin'
+            })
+        ]);
+
+        if (userResponse.ok && rolesResponse.ok && userRolesResponse.ok) {
+            const user = await userResponse.json();
+            const allRoles = await rolesResponse.json();
+            const userRoles = await userRolesResponse.json();
+
+            showUserRoleModal(user, allRoles.roles, userRoles.roles);
+        } else {
+            alert('ユーザー情報の取得に失敗しました。');
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        alert('ユーザー情報の取得中にエラーが発生しました。');
+    }
+}
+
+// ユーザーロール管理モーダル表示
+function showUserRoleModal(user, allRoles, userRoles) {
+    let roleCheckboxes = '';
+    
+    allRoles.forEach(role => {
+        const isChecked = userRoles.includes(role.name) ? 'checked' : '';
+        roleCheckboxes += `
+            <div style="margin: 5px 0;">
+                <input type="checkbox" id="role_${role.id}" value="${role.name}" ${isChecked}>
+                <label for="role_${role.id}" style="margin-left: 5px;">${role.name}</label>
+            </div>
+        `;
+    });
+
+    const modal = `
+        <div id="user-role-modal" style="
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center;
+            justify-content: center; z-index: 1000;">
+            <div style="
+                background: white; padding: 30px; border-radius: 8px;
+                max-width: 500px; width: 90%;">
+                <h3>ユーザーロール管理</h3>
+                <p><strong>ユーザー:</strong> ${user.email}</p>
+                <div style="margin: 20px 0; max-height: 300px; overflow-y: auto;">
+                    ${roleCheckboxes}
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button onclick="saveUserRoles(${user.id})" style="
+                        background: #007bff; color: white; border: none;
+                        padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">
+                        保存
+                    </button>
+                    <button onclick="closeUserRoleModal()" style="
+                        background: #6c757d; color: white; border: none;
+                        padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modal);
+}
+
+// ユーザーロール保存
+async function saveUserRoles(userId) {
+    const modal = document.getElementById('user-role-modal');
+    const checkboxes = modal.querySelectorAll('input[type="checkbox"]');
+    const selectedRoles = [];
+
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            selectedRoles.push(cb.value);
+        }
+    });
+
+    try {
+        // 現在のユーザーロールを取得
+        const userRolesResponse = await fetch(`/accounts/api/users/${userId}/roles/`, {
+            headers: {'X-CSRFToken': getCSRFToken()},
+            credentials: 'same-origin'
+        });
+        const currentRolesData = await userRolesResponse.json();
+        const currentRoles = currentRolesData.roles || [];
+
+        // 新しく追加するロール
+        const rolesToAdd = selectedRoles.filter(role => !currentRoles.includes(role));
+        // 削除するロール
+        const rolesToRemove = currentRoles.filter(role => !selectedRoles.includes(role));
+
+        // ロール追加
+        for (const role of rolesToAdd) {
+            await fetch('/accounts/api/roles/assign/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    user_id: userId,
+                    role_name: role
+                })
+            });
+        }
+
+        // ロール削除
+        for (const role of rolesToRemove) {
+            await fetch('/accounts/api/roles/remove/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    user_id: userId,
+                    role_name: role
+                })
+            });
+        }
+
+        alert('ユーザーロールを更新しました。');
+        closeUserRoleModal();
+        loadUserList(); // ユーザーリストを再読み込み
+
+    } catch (error) {
+        console.error('Error saving user roles:', error);
+        alert('ロールの更新中にエラーが発生しました。');
+    }
+}
+
+// モーダル閉じる
+function closeUserRoleModal() {
+    const modal = document.getElementById('user-role-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ユーザー削除
+function deleteUser(userId) {
+    if (confirm('このユーザーを削除してもよろしいですか？')) {
+        alert(`ユーザー削除機能（ID: ${userId}）は開発中です`);
+    }
+}
+
+// ロール管理表示
+function showRoleManagement() {
+    // タブコンテンツの切り替え
+    document.getElementById('user-tab').style.display = 'none';
+    document.getElementById('role-tab').style.display = 'block';
+    
+    // タブボタンの状態を更新
+    document.getElementById('user-tab-btn').classList.remove('active');
+    document.getElementById('role-tab-btn').classList.add('active');
+    
+    loadRoleList();
+}
+
+// ロール管理を隠してユーザー管理を表示
+function showUserManagement() {
+    // タブコンテンツの切り替え
+    document.getElementById('role-tab').style.display = 'none';
+    document.getElementById('user-tab').style.display = 'block';
+    
+    // タブボタンの状態を更新
+    document.getElementById('role-tab-btn').classList.remove('active');
+    document.getElementById('user-tab-btn').classList.add('active');
+}
+
+// ロールリストを読み込み
+async function loadRoleList() {
+    try {
+        const response = await fetch('/accounts/api/roles/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // ユーザー数を取得するため各ロールを拡張
+            const rolesWithUserCount = await Promise.all(
+                data.roles.map(async role => {
+                    const userCount = await getRoleUserCount(role.id);
+                    return {
+                        ...role,
+                        permissions: getRolePermissions(role.name),
+                        user_count: userCount,
+                        created_date: '2025-01-01' // 実際の作成日は今後実装
+                    };
+                })
+            );
+            displayRoleList(rolesWithUserCount);
+        } else {
+            console.error('Failed to load roles:', response.statusText);
+            // フォールバックとしてデモデータを表示
+            displayRoleList([
+                {id: 1, name: 'admin', permissions: ['すべての権限'], user_count: 1, created_date: '2025-01-01'},
+                {id: 2, name: 'manager', permissions: ['ユーザー管理'], user_count: 0, created_date: '2025-01-01'},
+                {id: 3, name: 'editor', permissions: ['編集権限'], user_count: 0, created_date: '2025-01-01'}
+            ]);
+        }
+    } catch (error) {
+        console.error('Error loading roles:', error);
+        displayRoleList([]);
+    }
+}
+
+// ロールの権限を取得（ロール名に基づく）
+function getRolePermissions(roleName) {
+    const permissions = {
+        'admin': ['すべての権限'],
+        'manager': ['ユーザー管理', 'ロール管理'],
+        'user_manager': ['ユーザー管理'],
+        'editor': ['トランスクリプト編集', '辞書管理'],
+        'viewer': ['読み取り専用']
+    };
+    return permissions[roleName] || ['基本権限'];
+}
+
+// ロールに所属するユーザー数を取得
+async function getRoleUserCount(roleId) {
+    // 実際のAPIが実装されるまでは0を返す
+    return 0;
+}
+
+// ロールリスト表示
+function displayRoleList(roles) {
+    const tbody = document.getElementById('role-table-body');
+    tbody.innerHTML = '';
+    
+    roles.forEach(role => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${role.name}</td>
+            <td>${role.permissions.join(', ')}</td>
+            <td>${role.user_count}</td>
+            <td>${role.created_date}</td>
+            <td class="role-actions">
+                <button class="btn btn-outline-primary btn-sm" onclick="editRole(${role.id})">編集</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteRole(${role.id})">削除</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ロール追加モーダル表示
+async function showAddRoleModal() {
+    const roleName = prompt('新しいロール名を入力してください:');
+    if (roleName && roleName.trim()) {
+        await createRole(roleName.trim());
+    }
+}
+
+// ロール作成
+async function createRole(roleName) {
+    try {
+        const response = await fetch('/accounts/api/roles/create/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                name: roleName
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`ロール「${roleName}」を作成しました。`);
+            loadRoleList(); // リストを再読み込み
+        } else {
+            alert(`エラー: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error creating role:', error);
+        alert('ロールの作成中にエラーが発生しました。');
+    }
+}
+
+// 現在のロール情報を取得
+async function getCurrentRoles() {
+    try {
+        const response = await fetch('/accounts/api/roles/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.roles || [];
+        } else {
+            console.error('Failed to load roles:', response.statusText);
+            return [];
+        }
+    } catch (error) {
+        console.error('Error loading roles:', error);
+        return [];
+    }
+}
+
+// ロール編集
+async function editRole(roleId) {
+    try {
+        // 現在のロール情報を取得
+        const currentRoles = await getCurrentRoles();
+        const currentRole = currentRoles.find(r => r.id === roleId);
+        
+        if (!currentRole) {
+            alert('ロールが見つかりません。');
+            return;
+        }
+        
+        // 組み込みロールの編集を防止
+        if (['admin', 'superuser'].includes(currentRole.name)) {
+            alert('組み込みロールの名前は変更できません。');
+            return;
+        }
+        
+        const newName = prompt(`ロール名を編集してください (現在: ${currentRole.name}):`, currentRole.name);
+        if (!newName || newName.trim() === '' || newName.trim() === currentRole.name) {
+            return;
+        }
+        
+        const response = await fetch(`/accounts/api/roles/${roleId}/update/`, {
+            method: 'PUT',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                name: newName.trim()
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(data.message);
+            loadRoleList(); // リストを再読み込み
+        } else {
+            alert(`エラー: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error editing role:', error);
+        alert('ロールの編集中にエラーが発生しました。');
+    }
+}
+
+// ロール削除
+async function deleteRole(roleId) {
+    if (!confirm('このロールを削除してもよろしいですか？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/accounts/api/roles/${roleId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('ロールを削除しました。');
+            loadRoleList(); // リストを再読み込み
+        } else {
+            alert(`エラー: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error deleting role:', error);
+        alert('ロールの削除中にエラーが発生しました。');
+    }
+}
+
+// 新規ユーザー追加
+function showAddUserModal() {
+    alert('新規ユーザー追加機能は開発中です');
+}
+
+// APIキーチェック
+function checkApiKey() {
+    fetch('/api/v1/check-api-key/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusDiv = document.getElementById('api-key-status');
+        if (data.has_api_key) {
+            statusDiv.className = 'success-box';
+            statusDiv.textContent = 'OpenAI APIキーが設定されています';
+        } else {
+            statusDiv.className = 'warning-box';
+            statusDiv.textContent = 'OpenAI APIキーが設定されていません。環境変数に設定してください。';
+        }
+    })
+    .catch(error => {
+        console.error('APIキーチェックエラー:', error);
+    });
+}
+
+// CSRFトークン取得
+function getCSRFToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfToken ? csrfToken.value : '';
+}
+
+// モデル料金更新
+function updateModelPrice() {
+    const model = document.getElementById('ai-model').value;
+    const price = MODEL_PRICING[model] || 0.01;
+    document.getElementById('model-price').textContent = `料金: $${price} USD / 1000トークン`;
+}
+
+// 処理モード更新
+function updateProcessingMode() {
+    processingMode = document.querySelector('input[name="processing_mode"]:checked').value;
+    const csvSection = document.getElementById('csv-section');
+    
+    if (processingMode === 'misspelling') {
+        csvSection.style.display = 'block';
+    } else {
+        csvSection.style.display = 'none';
+    }
+    
+    updateCorrectionButton();
+}
+
+// TXTファイルアップロード
+function handleTxtUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            originalText = e.target.result;
+            document.getElementById('original-text').value = originalText;
+            
+            // ファイル情報表示
+            const infoDiv = document.getElementById('upload-info');
+            const charCount = originalText.length;
+            const tokenCount = Math.ceil(charCount / 3); // 概算
+            const model = document.getElementById('ai-model').value;
+            const cost = (tokenCount / 1000) * MODEL_PRICING[model];
+            
+            infoDiv.innerHTML = `テキスト長: ${charCount}文字, 概算トークン数: ${tokenCount}, 概算コスト: $${cost.toFixed(4)} USD`;
+            infoDiv.style.display = 'block';
+            
+            updateCorrectionButton();
+        };
+        reader.readAsText(file);
+    }
+}
+
+// CSVファイルアップロード
+function handleCsvUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            csvText = e.target.result;
+            document.getElementById('csv-text').value = csvText;
+            parseCsvText();
+        };
+        reader.readAsText(file);
+    }
+}
+
+// CSV解析
+function parseCsvText() {
+    const csvTextValue = document.getElementById('csv-text').value;
+    const lines = csvTextValue.trim().split('\n');
+    correctionWords = [];
+    
+    if (lines.length > 1 && lines[0].includes('誤,正')) {
+        for (let i = 1; i < lines.length; i++) {
+            const parts = lines[i].split(',');
+            if (parts.length >= 2 && parts[0].trim() && parts[1].trim()) {
+                correctionWords.push({
+                    wrong: parts[0].trim(),
+                    correct: parts[1].trim()
+                });
+            }
+        }
+    }
+    
+    updateCorrectionButton();
+}
+
+// 訂正ボタン状態更新
+function updateCorrectionButton() {
+    const btn = document.getElementById('correction-btn');
+    let enabled = originalText.length > 0;
+    
+    if (processingMode === 'misspelling') {
+        enabled = enabled && correctionWords.length > 0;
+    }
+    
+    btn.disabled = !enabled;
+}
+
+// 訂正実行
+function runCorrection() {
+    if (!originalText) {
+        alert('訂正前議事録をアップロードしてください');
+        return;
+    }
+    
+    const model = document.getElementById('ai-model').value;
+    const customPrompt = document.getElementById('custom-prompt').value;
+    
+    const requestData = {
+        processing_mode: processingMode,
+        custom_prompt: customPrompt,
+        text: originalText,
+        correction_words: correctionWords,
+        model: model
+    };
+    
+    const btn = document.getElementById('correction-btn');
+    btn.disabled = true;
+    btn.textContent = '処理中...';
+    
+    fetch('/api/v1/correct-text/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            correctedText = data.corrected_text;
+            correctedTextEdited = correctedText;
+            document.getElementById('corrected-text').value = correctedText;
+            
+            // コスト更新
+            sessionCost += data.cost;
+            document.getElementById('session-cost').textContent = sessionCost.toFixed(4);
+            
+            // ボタン状態更新
+            updateButtonStates();
+            
+            alert(`${getModeLabel()}が完了しました（コスト: $${data.cost.toFixed(4)} USD）`);
+        } else {
+            alert('エラー: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('訂正エラー:', error);
+        alert('訂正処理中にエラーが発生しました');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = '訂正実行';
+        updateCorrectionButton();
+    });
+}
+
+// モードラベル取得
+function getModeLabel() {
+    const labels = {
+        'misspelling': '訂正',
+        'grammar': '校正', 
+        'summarize': '要約'
+    };
+    return labels[processingMode] || '処理';
+}
+
+// 訂正後テキスト更新
+function updateCorrectedText() {
+    correctedTextEdited = document.getElementById('corrected-text').value;
+    updateButtonStates();
+    
+    if (document.getElementById('show-diff').checked) {
+        showDiff();
+    }
+}
+
+// ボタン状態更新
+function updateButtonStates() {
+    const hasText = correctedTextEdited.length > 0;
+    document.getElementById('copy-btn').disabled = !hasText;
+    document.getElementById('download-btn').disabled = !hasText;
+}
+
+// 差分表示切り替え
+function toggleDiff() {
+    const showDiff = document.getElementById('show-diff').checked;
+    const diffContainer = document.getElementById('diff-container');
+    
+    if (showDiff && originalText && correctedTextEdited) {
+        showDiff();
+        diffContainer.style.display = 'block';
+    } else {
+        diffContainer.style.display = 'none';
+    }
+}
+
+// 差分表示
+function showDiff() {
+    const diffContainer = document.getElementById('diff-container');
+    const originalLines = originalText.split('\n');
+    const correctedLines = correctedTextEdited.split('\n');
+    
+    let diffHtml = '';
+    const maxLines = Math.max(originalLines.length, correctedLines.length);
+    
+    for (let i = 0; i < maxLines; i++) {
+        const original = originalLines[i] || '';
+        const corrected = correctedLines[i] || '';
+        
+        if (original === corrected) {
+            diffHtml += escapeHtml(original) + '<br>';
+        } else {
+            if (original) {
+                diffHtml += '<span class="diff-removed">' + escapeHtml(original) + '</span><br>';
+            }
+            if (corrected) {
+                diffHtml += '<span class="diff-added">' + escapeHtml(corrected) + '</span><br>';
+            }
+        }
+    }
+    
+    diffContainer.innerHTML = diffHtml;
+}
+
+// HTML エスケープ
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 訂正後を訂正前にコピー
+function copyToOriginal() {
+    if (correctedTextEdited) {
+        originalText = correctedTextEdited;
+        document.getElementById('original-text').value = originalText;
+        document.getElementById('show-diff').checked = false;
+        document.getElementById('diff-container').style.display = 'none';
+    }
+}
+
+// 結果ダウンロード
+function downloadResult() {
+    if (!correctedTextEdited) return;
+    
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0,19).replace(/[:-]/g, '').replace('T', '_');
+    const filename = `final_transcript_${timestamp}.txt`;
+    
+    const blob = new Blob([correctedTextEdited], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// コストリセット
+function resetCost() {
+    if (confirm('コスト履歴をリセットしますか？')) {
+        fetch('/api/v1/reset-cost/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-cost').textContent = '0.0000';
+                alert('コスト履歴をリセットしました。');
+            }
+        })
+        .catch(error => {
+            console.error('コストリセットエラー:', error);
+        });
+    }
+}
+
+// CSV テキストエリア変更監視
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('csv-text').addEventListener('input', parseCsvText);
+});
+</script>
+
 {% csrf_token %}
-{% endblock %}
+</body>
+</html>

@@ -50,28 +50,7 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transcripts:list' %}">
-                            <i class="fas fa-file-alt"></i> トランスクリプト
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'corrections:job_list' %}">
-                            <i class="fas fa-cogs"></i> 修正ジョブ
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'wordlists:list' %}">
-                            <i class="fas fa-list"></i> ワードリスト
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transcripts:process' %}">
-                            <i class="fas fa-play"></i> 処理実行
-                        </a>
-                    </li>
-                    {% endif %}
+                    <!-- Navigation items removed as requested -->
                 </ul>
                 
                 <ul class="navbar-nav">
@@ -85,7 +64,7 @@
                             <li><a class="dropdown-item" href="{% url 'accounts:api_usage' %}">API使用状況</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form action="{% url 'logout' %}" method="post" class="m-0">
+                                <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item">ログアウト</button>
                                 </form>
@@ -94,7 +73,7 @@
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">ログイン</a>
+                        <a class="nav-link" href="{% url 'accounts:login' %}">ログイン</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:register' %}">登録</a>
@@ -143,15 +122,7 @@
                     
                     <hr>
                     
-                    <h6 class="text-muted">クイックアクション</h6>
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'transcripts:upload' %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-upload"></i> アップロード
-                        </a>
-                        <a href="{% url 'wordlists:create' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-plus"></i> ワードリスト作成
-                        </a>
-                    </div>
+                    <!-- Quick actions removed as related features are not implemented -->
                     {% endblock %}
                 </div>
             </div>

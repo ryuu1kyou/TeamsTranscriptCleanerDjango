@@ -1,0 +1,107 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-31 12:00+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/registration/login.html:7
+msgid "ログイン"
+msgstr "Login"
+
+#: templates/registration/login.html:326
+msgid "Microsoft Teams議事録を AIで自動訂正"
+msgstr "AI-powered correction for Microsoft Teams transcripts"
+
+#: templates/registration/login.html:340
+msgid "ユーザー名またはパスワードが正しくありません。"
+msgstr "Incorrect username or password."
+
+#: templates/registration/login.html:350
+msgid "ユーザー名またはメールアドレス"
+msgstr "Username or Email Address"
+
+#: templates/registration/login.html:363
+msgid "パスワード"
+msgstr "Password"
+
+#: templates/registration/login.html:376
+msgid "ログイン状態を保持する"
+msgstr "Keep me logged in"
+
+#: templates/registration/login.html:387
+msgid "または次の方法でログイン"
+msgstr "Or login with"
+
+#: templates/registration/login.html:398
+msgid "Googleでログイン"
+msgstr "Login with Google"
+
+#: templates/transcripts/main_workspace.html
+msgid "設定"
+msgstr "Settings"
+
+#: templates/transcripts/main_workspace.html
+msgid "OpenAIモデル選択"
+msgstr "OpenAI Model Selection"
+
+#: templates/transcripts/main_workspace.html
+msgid "処理モード選択"
+msgstr "Processing Mode Selection"
+
+#: templates/transcripts/main_workspace.html
+msgid "誤字脱字修正"
+msgstr "Spelling Correction"
+
+#: templates/transcripts/main_workspace.html
+msgid "文法訂正"
+msgstr "Grammar Correction"
+
+#: templates/transcripts/main_workspace.html
+msgid "要約"
+msgstr "Summarization"
+
+#: templates/transcripts/main_workspace.html
+msgid "追加の指示（モードに応じて入力）"
+msgstr "Additional Instructions (Enter according to mode)"
+
+#: templates/transcripts/main_workspace.html
+msgid "訂正前議事録（TXT）アップロード"
+msgstr "Pre-correction Transcript (TXT) Upload"
+
+#: templates/transcripts/main_workspace.html
+msgid "誤字脱字一覧 (CSV) アップロード"
+msgstr "Spelling Error List (CSV) Upload"
+
+#: templates/transcripts/main_workspace.html
+msgid "管理"
+msgstr "Management"
+
+#: templates/transcripts/main_workspace.html
+msgid "訂正前のファイル内容（編集不可）"
+msgstr "Pre-correction File Content (Read-only)"
+
+#: templates/transcripts/main_workspace.html
+msgid "訂正後のファイル内容（手修正可）"
+msgstr "Post-correction File Content (Editable)"
+
+#: templates/transcripts/main_workspace.html
+msgid "テキストファイルをアップロードしてください"
+msgstr "Please upload a text file"
+
+#: templates/transcripts/main_workspace.html
+msgid "訂正実行後に結果が表示されます"
+msgstr "Results will be displayed after correction execution"

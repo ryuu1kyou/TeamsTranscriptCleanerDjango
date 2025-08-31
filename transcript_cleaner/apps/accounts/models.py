@@ -34,6 +34,20 @@ class User(AbstractUser):
         default=False,
         help_text="Whether the user's email is verified"
     )
+    avatar_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL for user's profile picture from social login"
+    )
+    last_login_method = models.CharField(
+        max_length=20,
+        choices=[
+            ('email', 'Email'),
+            ('google', 'Google'),
+        ],
+        default='email',
+        help_text="Last login method used"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -73,6 +87,46 @@ class User(AbstractUser):
         """Reset user's API cost to zero."""
         self.total_api_cost = Decimal('0.0000')
         self.save(update_fields=['total_api_cost'])
+    
+    # Role management methods
+    def get_roles(self):
+        """Get all roles (groups) assigned to this user."""
+        return self.groups.all()
+    
+    def get_role_names(self):
+        """Get list of role names assigned to this user."""
+        return list(self.groups.values_list('name', flat=True))
+    
+    def has_role(self, role_name):
+        """Check if user has a specific role."""
+        return self.groups.filter(name=role_name).exists()
+    
+    def add_role(self, role_name):
+        """Add a role to this user."""
+        from django.contrib.auth.models import Group
+        group, created = Group.objects.get_or_create(name=role_name)
+        self.groups.add(group)
+    
+    def remove_role(self, role_name):
+        """Remove a role from this user."""
+        from django.contrib.auth.models import Group
+        try:
+            group = Group.objects.get(name=role_name)
+            self.groups.remove(group)
+        except Group.DoesNotExist:
+            pass
+    
+    def is_admin(self):
+        """Check if user has admin role."""
+        return self.is_superuser or self.has_role('admin')
+    
+    def is_manager(self):
+        """Check if user has manager role."""
+        return self.is_admin() or self.has_role('manager')
+    
+    def can_manage_users(self):
+        """Check if user can manage other users."""
+        return self.is_admin() or self.has_role('user_manager')
 
 
 class UserProfile(models.Model):
