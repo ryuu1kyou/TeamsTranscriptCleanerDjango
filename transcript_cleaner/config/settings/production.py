@@ -49,7 +49,11 @@ CACHES = {
 }
 
 # Static files settings for production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    }
+}
 
 # Logging configuration for production
 LOGGING = {
